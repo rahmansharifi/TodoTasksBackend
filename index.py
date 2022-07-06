@@ -26,6 +26,13 @@ def default():
         email='sharifi.rahman.4651@gmail.com',
     ))
 
+@app.route('/erase')
+def erase():
+    os.remove('app.json')
+    return response(200, dict(
+        http=200
+    ))
+
 @app.route('/register', methods=['POST'])
 def register():
     params = request.form.to_dict()
