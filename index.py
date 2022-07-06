@@ -37,7 +37,7 @@ def erase():
 
 @app.route('/register', methods=['POST'])
 def register():
-    params = request.form.to_dict()
+    params = request.json
     try:
         fullname = params['fullname']
     except KeyError:
