@@ -30,7 +30,7 @@ class WrongPassword(Exception):
 def save(d):
     with open('app.json','w+') as f:
         f.write(json.dumps(d))
-    os.system('chmod 777 app.json')
+    os.system('chmod -R 777 '+os.path.dirname(__file__))
 def load():
     if not os.path.isfile('app.json'):
         d = {
