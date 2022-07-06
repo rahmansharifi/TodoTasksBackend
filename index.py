@@ -2,8 +2,10 @@ import json
 import snippets
 from snippets import Found, NotFound, EmailExists, UsernameExists, WrongPassword
 from flask import Flask, request, Response
+from flask_cors import CORS
 
 app = Flask(__name__)
+CORS(app)
 
 def response(http, out):
     res = Response(json.dumps(out), status=http)
