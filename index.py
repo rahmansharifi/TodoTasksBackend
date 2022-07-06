@@ -8,6 +8,7 @@ app = Flask(__name__)
 def response(http, out):
     res = Response(json.dumps(out), status=http)
     res.headers['Content-Type'] = 'application/json'
+    res.headers['Access-Control-Allow-Origin'] = '*'
     return res
 
 @app.route('/')
