@@ -9,6 +9,8 @@ def response(http, out):
     res = Response(json.dumps(out), status=http)
     res.headers['Content-Type'] = 'application/json'
     res.headers['Access-Control-Allow-Origin'] = '*'
+    res.headers['Access-Control-Allow-Methods'] = '*';
+    res.headers['Access-Control-Allow-Headers'] = '*';
     return res
 
 @app.route('/')
