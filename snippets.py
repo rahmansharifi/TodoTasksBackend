@@ -4,6 +4,8 @@ import json
 import random
 import datetime
 
+# kos bibi jenda sadam
+
 class exceptions:
     class Found(Exception):
         pass
