@@ -1,14 +1,14 @@
+import time
 import json
 import snippets
-from snippets import Found, NotFound, EmailExists, UsernameExists, WrongPassword
 from flask import Flask, request, Response
 from flask_cors import CORS
 
 app = Flask(__name__)
 CORS(app)
 
-def response(http, out):
-    res = Response(json.dumps(out), status=http)
+def response(out):
+    res = Response(json.dumps(out),200)
     res.headers['Content-Type'] = 'application/json'
     res.headers['Access-Control-Allow-Origin'] = '*'
     res.headers['Access-Control-Allow-Methods'] = '*'
@@ -17,175 +17,73 @@ def response(http, out):
 
 @app.route('/')
 def default():
-    return response(200, dict(
+    return response(dict(
         http=200,
         name=dict(
             first='Rahman',
             last='Sharifi',
-            full='Rahman Sharifi'
-        ),
-        web='rahmansharifi.ir',
-        email='sharifi.rahman.4651@gmail.com',
+            full='Rahman Sharifi',
+            web='rahmansharifi.ir',
+        )
     ))
 
-@app.route('/erase')
-def erase():
-    os.remove('app.json')
-    return response(200, dict(
-        http=200
-    ))
-
-@app.route('/register', methods=['POST'])
-def register():
-    params = request.json
+@app.route('/signup', methods=['POST'])
+def signup():
+    params = request.form.to_dict()
     try:
-        fullname = params['fullname']
-    except KeyError:
-        return response(400, dict(
-            http=400,
-            message='Please provide all necessary data. (fullname, username, email, password)',
-            exception='fullname is not provided.'
-        ))
-    try:
-        username = params['username']
-    except KeyError:
-        return response(400, dict(
-            http=400,
-            message='Please provide all necessary data. (fullname, username, email, password)',
-            exception='username is not provided.'
-        ))
-    try:
+        name = params['name']
         email = params['email']
-    except KeyError:
-        return response(400, dict(
-            http=400,
-            message='Please provide all necessary data. (fullname, username, email, password)',
-            exception='email is not provided.'
-        ))
-    try:
         password = params['password']
-    except KeyError:
-        return response(400, dict(
+    except KeyError as e:
+        return response(dict(
             http=400,
-            message='Please provide all necessary data. (fullname, username, email, password)',
-            exception='password is not provided.'
+            exception=f'<{str(e)[1:-1:1]}> is not provided.'
         ))
     try:
-        action = snippets.register(fullname, username, email, password)
-    except UsernameExists:
-        return response(400, dict(
-            http=400,
-            message='A user already signed up with this username.',
-            exception='Username already exists.'
-        ))
-    except EmailExists:
-        return response(400, dict(
-            http=400,
-            message='A user already signed up with this email.',
-            exception='Email already exists.'
-        ))
+        secret = snippets.signup(name, email, password)
     except Exception as e:
-        return response(400, dict(
-            http=400,
-            message='An unknown exception occured.',
-            exception=str(e)
-        ))
-    return response(201, dict(
+        if str(e) == 'already-exists':
+            return response(dict(
+                http=400,
+                exception='<email> already exists.'
+            ))
+    return response(dict(
         http=201,
-        auth=action[0],
-        user=action[1],
+        auth=secret,
     ))
 
 @app.route('/login', methods=['POST'])
 def login():
     params = request.form.to_dict()
     try:
-        username = params['username']
-    except KeyError:
-        return response(400, dict(
-            http=400,
-            message='Please provide all necessary data. (fullname, username, email, password)',
-            exception='username is not provided.'
-        ))
-    try:
-        password = params['password']
-    except KeyError:
-        return response(400, dict(
-            http=400,
-            message='Please provide all necessary data. (fullname, username, email, password)',
-            exception='password is not provided.'
-        ))
-    try:
-        action = snippets.login(username, password)
-    except NotFound:
-        return response(404, dict(
-            http=404,
-            message='Couldn\'t find any user with this username.',
-            exception=str(e),
-        ))
-    except WrongPassword:
-        return response(400, dict(
-            http=400,
-            message='Password doesn\'t match with the account you specified.',
-            exception=str(e)
-        ))
-    except Exception as e:
-        return response(400, dict(
-            http=400,
-            message='An unknown exception occured.',
-            exception=str(e)
-        ))
-    return response(202, dict(
-        http=202,
-        auth=action[0],
-        user=action[1],
-    ))
-
-@app.route('/forget', methods=['POST'])
-def forget():
-    params = request.form.to_dict()
-    try:
-        username = params['username']
-    except KeyError:
-        return response(400, dict(
-            http=400,
-            message='Please provide all necessary data. (fullname, username, email, password)',
-            exception='username is not provided.'
-        ))
-    try:
         email = params['email']
-    except KeyError:
-        return response(400, dict(
-            http=400,
-            message='Please provide all necessary data. (fullname, username, email, password)',
-            exception='email is not provided.'
-        ))
-    try:
         password = params['password']
-    except KeyError:
-        return response(400, dict(
+    except KeyError as e:
+        return response(dict(
             http=400,
-            message='Please provide all necessary data. (fullname, username, email, password)',
-            exception='password is not provided.'
+            exception=f'<{str(e)[1:-1:1]}> is not provided.'
         ))
     try:
-        action = snippets.forget(username, email, password)
-    except NotFound:
-        return response(404, dict(
-            http=404,
-            message=str(e),
-            exception=str(e)
-        ))
+        secret = snippets.login(email, password)
     except Exception as e:
-        return response(400, dict(
-            http=400,
-            message='An unknown exception occured.',
-            exception=str(e)
-        ))
-    return response(200, dict(
+        if str(e) == 'not-found':
+            return response(dict(
+                http=400,
+                exception='<email> not registered.'
+            ))
+        elif str(e) == 'empty-table':
+            return response(dict(
+                http=400,
+                exception='<email> not registered.'
+            ))
+        elif str(e) == 'wrong-password':
+            return response(dict(
+                http=400,
+                exception='<password> is wrong.'
+            ))
+    return response(dict(
         http=200,
-        auth=action[0],
-        user=action[1],
+        auth=secret,
     ))
 
 @app.route('/me',methods=['GET'])
@@ -197,32 +95,30 @@ def me():
             auth = header[1].split()[1]
             break
     if auth == None:
-        return response(400, dict(
+        return response(dict(
             http=400,
-            message='Please provide authorization header.',
-            exception='Authorization header is not set',
+            exception='<Authorization> header is missing.',
         ))
     try:
         action = snippets.me(auth)
-    except NotFound as e:
-        return response(404, dict(
-            http=404,
-            message=str(e),
-            exception=str(e),
-        ))
     except Exception as e:
-        return response(400, dict(
-            http=400,
-            message='An unknown exception occured.',
-            exception=str(e),
-        ))
-    return response(200, dict(
+        if str(e) == 'not-found':
+            return response(dict(
+                http=400,
+                exception='<session> is invalid.',
+            ))
+    return response(dict(
         http=200,
-        user=action,
+        user={
+            'name': action['name'],
+            'email': action['email'],
+            'admin': action['admin'],
+            'created': int(action['created']),
+        },
     ))
 
-@app.route('/tasks/all', methods=['GET'])
-def all_tasks():
+@app.route('/events/', methods=['GET'])
+def all_events():
     headers = request.headers.to_wsgi_list()
     auth = None
     for header in headers:
@@ -230,65 +126,87 @@ def all_tasks():
             auth = header[1].split()[1]
             break
     if auth == None:
-        return response(400, dict(
+        return response(dict(
             http=400,
-            message='Please provide authorization header.',
-            exception='Authorization header is not set',
+            exception='<Authorization> header is missing.',
         ))
     try:
-        action = snippets.tasks.all(auth)
-    except NotFound as e:
-        return response(404, dict(
-            http=404,
-            message=str(e),
-            exception=str(e),
-        ))
+        action = snippets.get_events(auth)
     except Exception as e:
-        return response(400, dict(
-            http=400,
-            message='An unknown exception occured.',
-            exception=str(e),
-        ))
-    return response(200, dict(
+        if str(e) == 'user-not-found':
+            return response(dict(
+                http=404,
+                exception='<session> is invalid.',
+            ))
+    return response(dict(
         http=200,
-        tasks=action,
+        events=action,
     ))
 
-@app.route('/tasks/add', methods=['POST'])
-def add_task():
+@app.route('/events/', methods=['POST'])
+def add_event():
+    params = request.form.to_dict()
+    try:
+        body = params['body']
+        priority = params['priority']
+        title = params['title']
+    except Exception as e:
+        return response(dict(
+            http=400,
+            exception=f'<{str(e)[1:-1:1]}> is not provided.'
+        ))
+    if not priority.lower() in ['hot','normal','cold']:
+        return response(dict(
+            http=400,
+            exception='<priority> type is invalid. [hot, normal, cold]'
+        ))
+    headers = request.headers.to_wsgi_list()
+    auth = None
+    for header in headers:
+        if header[0] == 'Authorization':
+            auth = header[1].split()[1]
+            break
+    if auth == None:
+        return response(dict(
+            http=400,
+            exception='<Authorization> header is missing.',
+        ))
+    try:
+        action = snippets.add_event(auth, title, body, priority)
+    except Exception as e:
+        if str(e) == 'user-not-found':
+            return response(dict(
+                http=404,
+                exception=str(e),
+            ))
+    return response(dict(
+        http=200,
+        event=action,
+    ))
+
+@app.route('/events/<id>', methods=['PATCH'])
+def update_event(id):
     params = request.form.to_dict()
     try:
         title = params['title']
     except KeyError:
-        return response(400, dict(
-            http=400,
-            message='Please provide all necessary data. (title, body, priority, date)',
-            exception='title is not provided.'
-        ))
+        title = None
     try:
         body = params['body']
     except KeyError:
-        return response(400, dict(
-            http=400,
-            message='Please provide all necessary data. (title, body, priority, date)',
-            exception='body is not provided.'
-        ))
+        body = None
     try:
-        priority = params['priority']
+        priority = params['priority'].lower()
     except KeyError:
-        return response(400, dict(
-            http=400,
-            message='Please provide all necessary data. (title, body, priority, date)',
-            exception='priority is not provided.'
-        ))
-    try:
-        date = params['date']
-    except KeyError:
-        return response(400, dict(
-            http=400,
-            message='Please provide all necessary data. (title, body, priority, date)',
-            exception='date is not provided.'
-        ))
+        priority = None
+    if priority != None:
+        if priority in ['hot','normal','cold']:
+            pass
+        else:
+            return response(dict(
+                http=400,
+                exception='<priority> is invalid. [hot, normal, cold]'
+            ))
     headers = request.headers.to_wsgi_list()
     auth = None
     for header in headers:
@@ -296,73 +214,30 @@ def add_task():
             auth = header[1].split()[1]
             break
     if auth == None:
-        return response(400, dict(
+        return response(dict(
             http=400,
-            message='Please provide authorization header.',
-            exception='Authorization header is not set',
+            exception='<Authorization> header is missing.',
         ))
     try:
-        action = snippets.tasks.add(auth, title, body, priority, date)
-    except NotFound as e:
-        return response(404, dict(
-            http=404,
-            message=str(e),
-            exception=str(e),
-        ))
+        action = snippets.update_event(auth, id, title, body, priority)
     except Exception as e:
-        return response(400, dict(
-            http=400,
-            message='An unknown exception occured.',
-            exception=str(e),
-        ))
-    return response(200, dict(
+        if str(e) == 'user-not-found':
+            return response(dict(
+                http=404,
+                exception='<session> is invalid.',
+            ))
+        elif str(e) == 'unauthorized':
+            return response(dict(
+                http=403,
+                exception='<event> is not yours.',
+            ))
+    return response(dict(
         http=200,
-        task=action,
+        event=id,
     ))
 
-@app.route('/tasks/<id>', methods=['PATCH'])
-def update_task(id):
-    params = request.form.to_dict()
-    try:
-        title = params['title']
-    except KeyError:
-        return response(400, dict(
-            http=400,
-            message='Please provide all necessary data. (title, body, priority, pending, date)',
-            exception='title is not provided.'
-        ))
-    try:
-        body = params['body']
-    except KeyError:
-        return response(400, dict(
-            http=400,
-            message='Please provide all necessary data. (title, body, priority, pending, date)',
-            exception='body is not provided.'
-        ))
-    try:
-        priority = params['priority']
-    except KeyError:
-        return response(400, dict(
-            http=400,
-            message='Please provide all necessary data. (title, body, priority, pending, date)',
-            exception='priority is not provided.'
-        ))
-    try:
-        pending = params['pending']
-    except KeyError:
-        return response(400, dict(
-            http=400,
-            message='Please provide all necessary data. (title, body, priority, pending, date)',
-            exception='pending is not provided.'
-        ))
-    try:
-        date = params['date']
-    except KeyError:
-        return response(400, dict(
-            http=400,
-            message='Please provide all necessary data. (title, body, priority, pending, date)',
-            exception='date is not provided.'
-        ))
+@app.route('/events/<id>', methods=['DELETE'])
+def delete_event(id):
     headers = request.headers.to_wsgi_list()
     auth = None
     for header in headers:
@@ -370,60 +245,24 @@ def update_task(id):
             auth = header[1].split()[1]
             break
     if auth == None:
-        return response(400, dict(
+        return response(dict(
             http=400,
-            message='Please provide authorization header.',
-            exception='Authorization header is not set',
+            exception='<Authorization> header is missing.',
         ))
     try:
-        action = snippets.tasks.update(auth, id, title, body, priority, pending, date)
-    except NotFound as e:
-        return response(404, dict(
-            http=404,
-            message=str(e),
-            exception=str(e),
-        ))
+        action = snippets.delete_event(auth, id)
     except Exception as e:
-        return response(400, dict(
-            http=400,
-            message='An unknown exception occured.',
-            exception=str(e),
-        ))
-    return response(200, dict(
-        http=200,
-        task=action,
-    ))
-
-@app.route('/tasks/<id>', methods=['DELETE'])
-def delete_task(id):
-    params = request.form.to_dict()
-    headers = request.headers.to_wsgi_list()
-    auth = None
-    for header in headers:
-        if header[0] == 'Authorization':
-            auth = header[1].split()[1]
-            break
-    if auth == None:
-        return response(400, dict(
-            http=400,
-            message='Please provide authorization header.',
-            exception='Authorization header is not set',
-        ))
-    try:
-        action = snippets.tasks.delete(auth, id)
-    except NotFound as e:
-        return response(404, dict(
-            http=404,
-            message=str(e),
-            exception=str(e),
-        ))
-    except Exception as e:
-        return response(400, dict(
-            http=400,
-            message='An unknown exception occured.',
-            exception=str(e),
-        ))
-    return response(200, dict(
+        if str(e) == 'user-not-found':
+            return response(dict(
+                http=400,
+                exception='<session> is invalid.',
+            ))
+        elif str(e) == 'unauthorized':
+            return response(dict(
+                http=403,
+                exception='<event> is not yours.',
+            ))
+    return response(dict(
         http=200
     ))
 
