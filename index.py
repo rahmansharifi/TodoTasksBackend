@@ -29,7 +29,7 @@ def default():
 
 @app.route('/signup', methods=['POST'])
 def signup():
-    params = request.form.to_dict()
+    params = request.json
     try:
         name = params['name']
         email = params['email']
@@ -54,7 +54,7 @@ def signup():
 
 @app.route('/login', methods=['POST'])
 def login():
-    params = request.form.to_dict()
+    params = request.json
     try:
         email = params['email']
         password = params['password']
@@ -145,7 +145,7 @@ def all_events():
 
 @app.route('/events/', methods=['POST'])
 def add_event():
-    params = request.form.to_dict()
+    params = request.json
     try:
         body = params['body']
         priority = params['priority']
@@ -186,7 +186,7 @@ def add_event():
 
 @app.route('/events/<id>', methods=['PATCH'])
 def update_event(id):
-    params = request.form.to_dict()
+    params = request.json
     try:
         title = params['title']
     except KeyError:
