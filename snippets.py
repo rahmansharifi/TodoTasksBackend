@@ -7,7 +7,7 @@ def signup(name, email, password):
     users = base.read('/users')
     users = {} if users == None else users
     for key, value in users.items():
-        if value['email'] == email:
+        if value['email'] == email.lower():
             raise Exception('already-exists')
     data = {
         'name': name,
@@ -24,7 +24,7 @@ def login(email, password):
     if base.read('/users') == None:
         raise Exception('empty-table')
     for key, value in users.items():
-        if value['email'] == email:
+        if value['email'] == email.lower():
             if value['password'] == password:
                 return key
             else:
