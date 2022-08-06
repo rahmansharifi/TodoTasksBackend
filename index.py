@@ -177,15 +177,15 @@ def add_event():
         if str(e) == 'user-not-found':
             return response(dict(
                 http=404,
-                exception=str(e),
+                exception='<session> is invalid.',
             ))
     return response(dict(
         http=200,
         event=action,
     ))
 
-@app.route('/events/<id>', methods=['PATCH'])
-def update_event(id):
+@app.route('/events/<event>', methods=['PATCH'])
+def update_event(event):
     params = request.json
     try:
         title = params['title']
@@ -219,7 +219,7 @@ def update_event(id):
             exception='<Authorization> header is missing.',
         ))
     try:
-        action = snippets.update_event(auth, id, title, body, priority)
+        action = snippets.update_event(auth, event, title, body, priority)
     except Exception as e:
         if str(e) == 'user-not-found':
             return response(dict(
@@ -233,7 +233,7 @@ def update_event(id):
             ))
     return response(dict(
         http=200,
-        event=id,
+        event=event,
     ))
 
 @app.route('/events/<id>', methods=['DELETE'])
