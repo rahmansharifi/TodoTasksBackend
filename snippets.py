@@ -37,6 +37,16 @@ def me(key):
         raise Exception('not-found')
     return user
 
+def get_users(key):
+    user = base.read('/users/'+key)
+    if user == None:
+        raise Exception('user-not-found')
+    if not user['admin']:
+        raise Exception('unauthorized')
+    users = base.read('/users')
+    users = {} if users == None else users
+    return users
+
 def get_events(key):
     user = base.read('/users/'+key)
     if user == None:
@@ -101,7 +111,6 @@ def delete_event(key, id):
     if user['email'] != event['owner']:
         raise Exception('unauthorized')
     base.delete('/events/'+id)
-
 
 if __name__=='__main__':
 

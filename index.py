@@ -117,6 +117,37 @@ def me():
         },
     ))
 
+@app.route('/users', methods=['GET'])
+def all_events():
+    headers = request.headers.to_wsgi_list()
+    auth = None
+    for header in headers:
+        if header[0] == 'Authorization':
+            auth = header[1].split()[1]
+            break
+    if auth == None:
+        return response(dict(
+            http=400,
+            exception='<Authorization> header is missing.',
+        ))
+    try:
+        action = snippets.get_users(auth)
+    except Exception as e:
+        if str(e) == 'user-not-found':
+            return response(dict(
+                http=404,
+                exception='<session> is invalid.',
+            ))
+        elif str(e) == 'unauthorized':
+            return response(dict(
+                http=404,
+                exception='Unauthorized',
+            ))
+    return response(dict(
+        http=200,
+        users=action,
+    ))
+
 @app.route('/events/', methods=['GET'])
 def all_events():
     headers = request.headers.to_wsgi_list()
