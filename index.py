@@ -118,7 +118,7 @@ def me():
     ))
 
 @app.route('/users', methods=['GET'])
-def all_events():
+def all_users():
     headers = request.headers.to_wsgi_list()
     auth = None
     for header in headers:
